@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>5263f051-e897-4a02-aa99-af45f7f1ad1e</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>.</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.400" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.416.16" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.406.25" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Neurotec">
+      <HintPath>Dependencies\Neurotec.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Biometrics">
+      <HintPath>Dependencies\Neurotec.Biometrics.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Biometrics.Client">
+      <HintPath>Dependencies\Neurotec.Biometrics.Client.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Licensing">
+      <HintPath>Dependencies\Neurotec.Licensing.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Biometrics.Gui">
+      <HintPath>Dependencies\Neurotec.Biometrics.Gui.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Devices">
+      <HintPath>Dependencies\Neurotec.Devices.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Gui">
+      <HintPath>Dependencies\Neurotec.Gui.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+    <Reference Include="Neurotec.Media">
+      <HintPath>Dependencies\Neurotec.Media.dll</HintPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Dependencies\" />
+	  <Content Include="Dependencies\**\*.*">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+		  <Link>%(Filename)%(Extension)</Link>
+		  <!-- Ensures it goes to root, not in lib folder -->
+	  </Content>
+  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="License\" />
+		<Content Include="License\**\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+			<!--<Link>%(Filename)%(Extension)</Link>-->
+			<!-- Ensures it goes to root, not in lib folder -->
+		</Content>
+	</ItemGroup>
+</Project>

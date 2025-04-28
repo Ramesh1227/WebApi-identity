@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\4CT\IdentityServiceApi\bin\Release\net8.0\publish\</_PublishTargetUrl>
+    <History>True|2025-04-27T19:53:52.0794880Z||;True|2025-04-28T01:22:49.1181559+05:30||;True|2025-04-27T23:49:43.4491972+05:30||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>
