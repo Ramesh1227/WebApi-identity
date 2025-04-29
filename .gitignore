@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/IdentityServiceApi/obj/Debug/net8.0
+/IdentityServiceApi/obj/Container
+/IdentityServiceApi/.vs/IdentityServiceApi/CopilotIndices/17.13.441.19478
+/IdentityServiceApi/.vs/IdentityServiceApi/FileContentIndex
+/IdentityServiceApi/obj
+/IdentityServiceApi/.vs/IdentityServiceApi
+/IdentityServiceApi/bin/Debug/net8.0

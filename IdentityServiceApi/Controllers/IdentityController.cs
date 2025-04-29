@@ -81,23 +81,23 @@ namespace IdentityService.Controllers
             }
             catch (JsonException jsonEx)
             {
-                _logger.LogError($"JSON Deserialization Error: {jsonEx?.Message}");
+                _logger.LogError($"JSON Deserialization Error: {jsonEx}");
                 return BadRequest("Invalid JSON format.");
             }
             catch (FormatException fe)
             {
-                _logger.LogError($"Image base64 decoding failed: {fe?.Message}");
+                _logger.LogError($"Image base64 decoding failed: {fe}");
                 return BadRequest("Invalid image format.");
             }
             catch (AmazonS3Exception s3Ex)
             {
-                _logger.LogError($"S3 upload error: {s3Ex?.Message}");
-                return ServerError("Failed to upload image.");
+                _logger.LogError($"Error while getting data from S3: {s3Ex}");
+                return ServerError("Error while getting data from S3.");
             }
             catch (AmazonDynamoDBException dbEx)
             {
-                _logger.LogError($"DynamoDB update error: {dbEx?.Message}");
-                return ServerError("Failed to update employee info.");
+                _logger.LogError($"Error while getting data from DynamoDB: {dbEx}");
+                return ServerError("Error while getting data from DynamoDB.");
             }
             catch (Exception ex)
             {
