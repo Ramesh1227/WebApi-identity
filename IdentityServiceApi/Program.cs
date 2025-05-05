@@ -8,6 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+
+LicenseActivator.Activate(logger); // Activate the license for Neurotec components
+
 // Add services to the container.
 // AWS Config
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
@@ -16,22 +20,29 @@ builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddAWSService<IAmazonDynamoDB>();
 
-// Register AmazonS3Client manually
-//builder.Services.AddSingleton<IAmazonS3>(sp =>
-//{
-//    return new AmazonS3Client(awsCredentials, RegionEndpoint.APSouth2); // Replace with your AWS region
-//});
+var awsCredentials = new BasicAWSCredentials(
+    builder.Configuration["AWS:AccessKey"],
+    builder.Configuration["AWS:SecretKey"]
+);
 
-//builder.Services.AddSingleton<IAmazonDynamoDB>(sp =>
-//{
-//    return new AmazonDynamoDBClient(awsCredentials, RegionEndpoint.APSouth2); // Replace with your AWS region
-//});
+ //Register AmazonS3Client manually
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    return new AmazonS3Client(awsCredentials, RegionEndpoint.APSouth2); // Replace with your AWS region
+});
+
+builder.Services.AddSingleton<IAmazonDynamoDB>(sp =>
+{
+    return new AmazonDynamoDBClient(awsCredentials, RegionEndpoint.APSouth2); // Replace with your AWS region
+});
 
 builder.Services.AddScoped<IdentityVerificationServices>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 var app = builder.Build();
 app.UseExceptionHandler(errorApp =>

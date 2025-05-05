@@ -19,7 +19,7 @@ namespace IdentityServiceApi.Service
         private readonly IAmazonDynamoDB _dynamoDbClient;
         private readonly DynamoDBContext _dbContext;
         private EmployeeIdentityResponse response;
-        private readonly ILogger<IdentityVerificationServices> _logger;
+        //private readonly ILogger<IdentityVerificationServices> _logger;
 
 
         public IdentityVerificationServices(IAmazonS3 s3Client,
@@ -35,7 +35,7 @@ namespace IdentityServiceApi.Service
             //_s3Client = new AmazonS3Client(awsCredentials, Amazon.RegionEndpoint.APSouth2);
             _dbContext = new DynamoDBContext(_dynamoDbClient);
             //_dbContext = new DynamoDBContext(client);
-            _logger = new LoggerFactory().CreateLogger<IdentityVerificationServices>();
+            //_logger = new LoggerFactory().CreateLogger<IdentityVerificationServices>();
         }
 
         /// <summary>
@@ -47,13 +47,13 @@ namespace IdentityServiceApi.Service
         /// <param name="biometricClient">The biometric client used for verification.</param>
         /// <returns>An API Gateway proxy response indicating the result of the verification.</returns>
 
-        public async Task<EmployeeIdentityResponse> ProcessIdentityVerification(List<EmployeeIdentityEntity> identities, NSubject candidateSubject, NBiometricClient biometricClient)
+        public async Task<EmployeeIdentityResponse> ProcessIdentityVerification(List<EmployeeIdentityEntity> identities, NSubject candidateSubject, NBiometricClient biometricClient, ILogger _logger)
         {
             foreach (var identity in identities)
             {
                 // Retrieve the stored image from S3
-                using var refStream = await GetS3ObjectStreamAsync(_bucketName, identity.ImageKey);
-                using var refSubject = CreateSubjectFromStream(refStream, "reference");
+                using var refStream = await GetS3ObjectStreamAsync(_bucketName, identity.ImageKey,_logger);
+                using var refSubject = CreateSubjectFromStream(refStream, "reference", _logger);
 
                 // Perform biometric verification
                 biometricClient.Verify(refSubject, candidateSubject);
@@ -86,14 +86,14 @@ namespace IdentityServiceApi.Service
         /// <param name="meetingId">The ID of the meeting to retrieve.</param>
         /// <returns>A ScheduledMeetingList object containing meeting details, or null if not found.</returns>
 
-        public async Task<ScheduledMeetingList?> GetMeetingAsync(string meetingId)
+        public async Task<ScheduledMeetingList?> GetMeetingAsync(string meetingId, ILogger _logger)
         {
             try
             {
                 var results = await _dbContext.ScanAsync<ScheduledMeetingList>(
                     new[] { new ScanCondition("MeetingId", ScanOperator.Equal, meetingId) }
                 ).GetRemainingAsync();
-
+                _logger.LogInformation($"Meeting information retrieved for MeetingId: {meetingId}");
                 return results.FirstOrDefault();
             }
             catch (AmazonDynamoDBException ex)
@@ -108,17 +108,19 @@ namespace IdentityServiceApi.Service
         /// <param name="ids">A list of employee IDs.</param>
         /// <returns>A list of EmployeeIdentityEntity objects.</returns>
 
-        public async Task<List<EmployeeIdentityEntity>> GetEmployeesByIdsAsync(List<string> ids)
+        public async Task<List<EmployeeIdentityEntity>> GetEmployeesByIdsAsync(List<string> ids, ILogger _logger)
         {
             try
             {
                 var batch = _dbContext.CreateBatchGet<EmployeeIdentityEntity>();
                 ids.ForEach(batch.AddKey);
                 await batch.ExecuteAsync();
+                _logger.LogInformation($"Employee identity records retrieved for IDs: {string.Join(", ", ids)}");
                 return batch.Results;
             }
             catch (AmazonDynamoDBException ex)
             {
+                _logger.LogError($"AmazonDynamoDBException: {ex.Message}");
                 throw;
             }
         }
@@ -131,7 +133,7 @@ namespace IdentityServiceApi.Service
         /// <returns>A stream containing the object's data.</returns>
         /// <exception cref="AmazonS3Exception">Thrown when an error occurs during the S3 GetObject operation.</exception>
         /// <exception cref="Exception">Thrown for general exceptions.</exception>
-        public async Task<Stream> GetS3ObjectStreamAsync(string bucket, string key)
+        public async Task<Stream> GetS3ObjectStreamAsync(string bucket, string key, ILogger _logger)
         {
             try
             {
@@ -145,6 +147,7 @@ namespace IdentityServiceApi.Service
                 // Execute the GetObjectAsync request to retrieve the object from S3
                 var response = await _s3Client.GetObjectAsync(request);
 
+                _logger.LogInformation($"S3 object retrieved: Bucket = {bucket}, Key = {key}");
                 // Return the response stream containing the object's data
                 return response.ResponseStream;
             }
@@ -152,18 +155,19 @@ namespace IdentityServiceApi.Service
             {
                 // Log and rethrow Amazon S3 specific exceptions
                 // Example: access denied, bucket not found, etc.
+                _logger.LogError($"AmazonS3Exception: {ex.Message}");
                 throw ex;
             }
         }
 
-        public NSubject CreateSubjectFromBase64(string base64Image, string subjectId)
+        public NSubject CreateSubjectFromBase64(string base64Image, string subjectId, ILogger _logger)
         {
             //byte[] imageBytes1 = File.ReadAllBytes("C:\\4CT\\Identity\\FaceAuthendicationFunctions\\bin\\Debug\\net8.0\\Images\\Testimage.jpg");
             ////string base64String = Convert.ToBase64String(imageBytes1);
 
             var imageBytes = Convert.FromBase64String(base64Image);
             using var stream = new MemoryStream(imageBytes);
-            return CreateSubjectFromStream(stream, subjectId);
+            return CreateSubjectFromStream(stream, subjectId, _logger);
         }
         /// <summary>
         /// Creates an NSubject from a given image stream.
@@ -171,7 +175,7 @@ namespace IdentityServiceApi.Service
         /// <param name="imageStream">The input image stream.</param>
         /// <param name="subjectId">The identifier for the subject.</param>
         /// <returns>An NSubject containing the facial image.</returns>
-        public NSubject CreateSubjectFromStream(Stream imageStream, string subjectId)
+        public NSubject CreateSubjectFromStream(Stream imageStream, string subjectId, ILogger _logger)
         {
             string tempFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.jpg");
 

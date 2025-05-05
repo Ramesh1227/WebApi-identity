@@ -37,20 +37,23 @@ namespace IdentityService.Controllers
 
             try
             {
-                _logger.LogInformation("Verification started");
+                _logger.LogInformation($"Verification started for Id : {request.MeetingId}");
 
                 // Load license before processing anything
-                LicenseActivator.Activate(_logger);
+                //LicenseActivator.Activate(_logger);
 
                 // Retrieve meeting information based on the provided MeetingId
-                var meeting = await _veificationSevices.GetMeetingAsync(request.MeetingId);
+                var meeting = await _veificationSevices.GetMeetingAsync(request.MeetingId, _logger);
                 if (meeting == null || string.IsNullOrEmpty(meeting.OrganizerId) || meeting.AttendesList?.Count == 0)
                     return BadRequest("Invalid or empty meeting.");
 
                 // Compile a list of employee IDs involved in the meeting
                 var employeeIds = new List<string> { meeting.OrganizerId };
-                employeeIds.AddRange(meeting.AttendesList);
-                var identities = await _veificationSevices.GetEmployeesByIdsAsync(employeeIds.Distinct().ToList());
+                if (meeting.AttendesList != null && meeting.AttendesList.Count > 0)
+                {
+                    employeeIds.AddRange(meeting.AttendesList);
+                }
+                var identities = await _veificationSevices.GetEmployeesByIdsAsync(employeeIds.Distinct().ToList(),_logger);
 
                 // Validate that employee identities were found
                 if (identities == null || identities.Count == 0)
@@ -58,10 +61,8 @@ namespace IdentityService.Controllers
 
 
                 // Create a biometric subject from the provided base64 image
-                var candidateSubject = _veificationSevices.CreateSubjectFromBase64(request.Base64Image, "candidate");
-
-                // Removed the incorrect line causing the error as 'FaceDetectionModels' is not a valid property of 'NBiometricClient'.
-                // Adjusted the code to ensure compatibility with the NBiometricClient API.
+                var candidateSubject = _veificationSevices.CreateSubjectFromBase64(request.Base64Image, "candidate", _logger);
+                _logger.LogInformation($"Candidate subject created with ID: {candidateSubject?.Id}");
 
                 using var biometricClient = new NBiometricClient
                 {
@@ -76,7 +77,13 @@ namespace IdentityService.Controllers
                     return BadRequest("Failed to extract face template.");
 
                 // Process identity verification against stored employee images
-                var result = await _veificationSevices.ProcessIdentityVerification(identities, candidateSubject, biometricClient);
+                var result = await _veificationSevices.ProcessIdentityVerification(identities, candidateSubject, biometricClient, _logger);
+                if (result.Status == NBiometricStatus.MatchNotFound)
+                {
+                    _logger.LogInformation($"No match found for candidate subject ID: {candidateSubject?.Id}");
+                    return Unauthorized("No match found.");
+                }
+                _logger.LogInformation($"Match found for candidate subject ID: {candidateSubject?.Id} with score: {result.MatchScore}");
                 return Success(result);
             }
             catch (JsonException jsonEx)

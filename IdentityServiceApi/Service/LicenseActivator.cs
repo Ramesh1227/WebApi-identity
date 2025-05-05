@@ -32,6 +32,8 @@ namespace IdentityServiceApi.Service
                             {
                                 _logger.LogInformation($"License file found: {file}");
                                 var content = File.ReadAllText(file);
+
+                                NLicenseManager.WritableStoragePath = licensePath;
                                 NLicense.Add(content);
 
                                 if (!NLicense.Obtain("/local", 5000, components))
